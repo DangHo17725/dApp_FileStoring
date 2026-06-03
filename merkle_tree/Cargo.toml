@@ -3,7 +3,28 @@ name = "merkle_tree"
 version = "0.1.0"
 edition = "2021"
  
+# ── Thư viện (cho Python module sau này) ─────────────────────────
+[lib]
+name    = "merkle_rs"
+crate-type = ["cdylib", "rlib"]
+# cdylib → build ra file .pyd (Windows) / .so (Linux) cho Python import
+# rlib   → cho phép src/main.rs dùng chung code trong lib
+ 
+# ── Binary (cargo run) ───────────────────────────────────────────
+[[bin]]
+name = "merkle_tree"
+path = "src/main.rs"
+ 
+# ── Feature flag: tách PyO3 khỏi binary ──────────────────────────
+# cargo run                              → KHÔNG dùng PyO3
+# maturin develop --features extension-module → build Python module
+[features]
+default           = []
+extension-module  = ["pyo3/extension-module"]
+ 
+# ── Dependencies ─────────────────────────────────────────────────
 [dependencies]
-sha2 = "0.10"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+sha2       = { version = "0.10" }
+serde      = { version = "1", features = ["derive"] }
+serde_json = { version = "1" }
+pyo3 = { version = "0.22", optional = true }

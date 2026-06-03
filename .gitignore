@@ -1,0 +1,32 @@
+# Rust build
+/target/
+
+# Python virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Maturin / PyO3 build cache
+.maturin/
+
+# Temporary output
+*.log
+
+# Optional: ignore generated records if not needed
+# output/
