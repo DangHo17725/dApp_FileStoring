@@ -30,3 +30,8 @@ Thumbs.db
 
 # Optional: ignore generated records if not needed
 # output/
+# CertiChain frontend
+certichain-frontend/node_modules/
+certichain-frontend/dist/
+certichain-frontend/.env
+certichain-frontend/*.log
