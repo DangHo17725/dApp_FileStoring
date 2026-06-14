@@ -35,3 +35,10 @@ certichain-frontend/node_modules/
 certichain-frontend/dist/
 certichain-frontend/.env
 certichain-frontend/*.log
+
+# Hardhat / Blockchain
+blockchain/node_modules/
+blockchain/artifacts/
+blockchain/cache/
+blockchain/.env
+blockchain/*.log
