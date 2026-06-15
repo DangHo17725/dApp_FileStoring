@@ -1,32 +1,31 @@
-# Rust build
-/target/
+# Node modules
+/node_modules
 
-# Python virtual environment
-venv/
-.venv/
+# Compilation output
+/dist
 
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# pnpm deploy output
+/bundle
 
-# Environment variables
+# Hardhat Build Artifacts
+/artifacts
+
+# Hardhat compilation (v2) support directory
+/cache
+
+# Typechain output
+/types
+
+# Environment files
 .env
+.env.*
+!.env.example
 
-# OS files
-.DS_Store
-Thumbs.db
+# Hardhat coverage reports
+/coverage
 
-# IDE
-.vscode/
-.idea/
+# Gas snapshot files
+/.gas-snapshot
 
-# Maturin / PyO3 build cache
-.maturin/
-
-# Temporary output
-*.log
-
-# Optional: ignore generated records if not needed
-# output/
+# Snapshot cheatcodes output
+/snapshots

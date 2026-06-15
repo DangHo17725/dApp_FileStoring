@@ -1,0 +1,26 @@
+{
+  "name": "blockchain",
+  "version": "1.0.0",
+  "description": "Cách chạy thử:\r 1. Tải Rust (có thể coi Youtube)\r 2. Cho một vài file .docs .pdf,... vào folder sample_docs\r 3. cargo run file main.rs trong phần merkle_tree\r 4. chạy file add_batch_to_blockchain.py\r Các file được gom thành một batch\r Hệ thống dùng Merkle Tree để:\r - hash từng file\r - tạo Merkle Root đại diện cho toàn bộ batch\r Thông tin chi tiết của batch được lưu ở folder output dưới dạng batch_record.json\r - Blockchain không chuyển nguyên JSON thành block theo kiểu lưu toàn bộ chi tiết, mà lấy ra các thông tin quan trọng từ JSON như: batch_id,merkle_root, manifest_hash, document_count\r - Sau đó ghi các thông tin này vào một block\r - Chuỗi block liên kết bằng previous_hash, giúp phát hiện nếu dữ liệu block bị sửa đổi",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LuvPeaaa/Blockchain-MerkleTree.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/LuvPeaaa/Blockchain-MerkleTree/issues"
+  },
+  "homepage": "https://github.com/LuvPeaaa/Blockchain-MerkleTree#readme",
+  "devDependencies": {
+    "@types/node": "^22.19.19",
+    "hardhat": "^3.7.0",
+    "typescript": "~6.0.3"
+  }
+}
