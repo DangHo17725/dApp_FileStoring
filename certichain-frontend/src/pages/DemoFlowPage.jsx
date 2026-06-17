@@ -64,7 +64,8 @@ const DEMO_STEPS = [
 export function DemoFlowPage() {
   const navigate = useNavigate();
   const { account, isAdmin, isIssuer, isConnecting, connectWallet } = useWeb3();
-  const { completedSteps, markStepComplete, resetDemo } = useDemo();
+  const { completedSteps: completedSet, markStepComplete, resetDemo } = useDemo();
+  const completedSteps = Array.from(completedSet ?? []);
 
   const [isStarting, setIsStarting] = useState(false);
 
@@ -82,7 +83,9 @@ export function DemoFlowPage() {
   const handleStepAction = async (step) => {
     if (step.action === 'connect') {
       await connectWallet();
+      markStepComplete(step.id);
     } else if (step.path) {
+      markStepComplete(step.id);
       navigate(step.path);
     }
   };

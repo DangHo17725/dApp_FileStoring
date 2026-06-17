@@ -32,11 +32,9 @@ contract DocumentNotary {
         uint256         timestamp
     );
 
-    // ════════════════════════════════════════════════════════════
     // PROOF OF EXISTENCE
     // Ghi merkleRoot của một batch lên chain
     // Bất kể batch có 1 hay 1000 file, chỉ gọi 1 lần duy nhất
-    // ════════════════════════════════════════════════════════════
     function notarize(
         bytes32         merkleRoot,
         uint256         fileCount,

@@ -79,7 +79,10 @@ export function CertificatesPage() {
       <div className="glass-card p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-500" />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-500"
+              style={{ pointerEvents: 'none' }}
+            />
             <input
               type="text"
               placeholder="Search by ID, name, or address..."
@@ -88,7 +91,8 @@ export function CertificatesPage() {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="input-field pl-10 w-full"
+              className="input-field w-full"
+              style={{ paddingLeft: '2.75rem' }}
             />
           </div>
           <div className="flex gap-3">

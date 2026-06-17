@@ -20,7 +20,7 @@ import {
 
 export function IssuerManagementPage() {
   const { account, isAdmin, networkInfo, isConnecting, connectWallet } = useWeb3();
-  const { issuers, addIssuer, removeIssuer, isLoading } = useIssuerManagement();
+  const { issuers= [], addIssuer, removeIssuer, isLoading } = useIssuerManagement();
 
   const [newIssuerAddress, setNewIssuerAddress] = useState('');
   const [searchQuery, setSearchQuery] = useState('');

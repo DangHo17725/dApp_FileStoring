@@ -1,0 +1,35 @@
+{
+  "batch_id": "batch_001",
+  "timestamp": "1781687989",
+  "merkle_root": "b4ec94f7de775c71da6bd26fa6c78534add8987084293123f3b2b4baf74edbe0",
+  "files": [
+    {
+      "file_name": "BI318.pdf",
+      "file_hash": "d0ec4da97223d6accd4d380554d7ef506353f7c775539ce9319033744444a66c"
+    },
+    {
+      "file_name": "Chuong 9.pdf",
+      "file_hash": "2978296b361406744ab57c920230558e0e8d7ad6e54eebe503fe982b5b7e1039"
+    },
+    {
+      "file_name": "DSA241-VN.pdf",
+      "file_hash": "d68e1171134f601405b84be915e119ad3354bf977eca801e1c4e13d948e1f691"
+    },
+    {
+      "file_name": "ann-tutorials-vn.pdf",
+      "file_hash": "4a1611e6c0b38f29e731ca856f9826a88a6d177bdee905fe5663bb9f39666f5d"
+    },
+    {
+      "file_name": "dai-so-tuyen-tinh_dang-van-vinh_slide-bai-giang-thay-vinh - [cuuduongthancong.com].pdf",
+      "file_hash": "0ccd3f7ea6c12c7f6f285db82456d4ef19258d47d580f2c2fc7b2f26e73aabe7"
+    },
+    {
+      "file_name": "dap-an-trac-nghiem-kinh-te-vi-mo-kiem-tra-cuoi-ky.pdf",
+      "file_hash": "992c901fe8fc9f9d64d6d51a7b80624f206ea5281ab3ac015b71360b31390c1c"
+    },
+    {
+      "file_name": "ĐỀ CƯƠNG ÔN TẬP KINH TẾ VI MÔ.pdf",
+      "file_hash": "87519b8763a40a1670f9e5114b1f9bba9d204ebda48a4e550f8134ad16844568"
+    }
+  ]
+}
