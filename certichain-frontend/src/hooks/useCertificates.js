@@ -4,8 +4,8 @@ import { useTransactions } from '../context/TransactionContext';
 import toast from 'react-hot-toast';
 
 export function useCertificates() {
-  const { certificateContract, account } = useWeb3();
-  const contract = certificateContract;
+  const { contract, account } = useWeb3();
+  
 
   const { addTransaction, updateTransaction } = useTransactions();
   const [isLoading, setIsLoading] = useState(false);

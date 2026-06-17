@@ -142,7 +142,7 @@ export function IssueCertificatePage() {
         certType: form.certType,
         documentHash,
         metadataHash,
-        merkleRoot,
+        merkleRoot: documentHash,
         recipient: form.recipientAddress,
         expiresAt,
       });
