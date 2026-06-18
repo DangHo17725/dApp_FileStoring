@@ -1,4 +1,7 @@
 // Contract ABI for CertificateRegistry
+import DocumentNotaryArtifact from './DocumentNotary.json';
+export const NOTARY_ABI     = DocumentNotaryArtifact.abi;
+export const NOTARY_ADDRESS = import.meta.env.VITE_NOTARY_ADDRESS;
 export const CONTRACT_ABI = [
     {
       "inputs": [],
