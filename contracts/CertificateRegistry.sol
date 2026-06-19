@@ -21,6 +21,7 @@ contract CertificateRegistry {
         uint256 expiresAt;
         CertificateStatus status;
         string revokedReason;
+        string ipfsCID;
     }
 
     address public admin;
@@ -98,7 +99,8 @@ contract CertificateRegistry {
         bytes32 metadataHash,
         bytes32 merkleRoot,
         address recipient,
-        uint256 expiresAt
+        uint256 expiresAt,
+        string memory ipfsCID
     ) external onlyIssuer {
         require(bytes(certId).length > 0, "Certificate ID is required");
         require(bytes(certName).length > 0, "Certificate name is required");
@@ -119,7 +121,8 @@ contract CertificateRegistry {
             expiresAt: expiresAt,
             status: CertificateStatus.Valid,
             revokedReason: "",
-            merkleRoot: merkleRoot
+            merkleRoot: merkleRoot,
+            ipfsCID: ipfsCID
         });
 
         certificateExists[certId] = true;
@@ -266,5 +269,11 @@ contract CertificateRegistry {
 
     function getTotalCertificates() external view returns (uint256) {
         return allCertificateIds.length;
+    }
+
+    //Hỗ trợ Backend lấy IPFS CID để cấp quyền truy cập file
+    function getCertificateIPFS(string memory certId) external view returns (string memory) {
+        require(certificateExists[certId], "Certificate does not exist");
+        return certificates[certId].ipfsCID;
     }
 }

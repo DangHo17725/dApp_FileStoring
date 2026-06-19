@@ -70,3 +70,37 @@ export async function tamperBackendBlock(blockIndex = 1) {
 export async function resetBackendChain() {
   return request('/api/blockchain/reset', { method: 'POST' });
 }
+
+export async function uploadFileToIPFS(file) {
+  const formData = new FormData();
+  formData.append('file', file); // Khớp chính xác tham số 'file' của FastAPI
+  
+  return request('/api/ipfs/pin', {
+    method: 'POST',
+    body: formData, // Trình duyệt tự nhận diện FormData để cấu hình Boundary
+  });
+}
+
+export async function getFileAccess({ certId, wallet, signature, message }) {
+  const response = await fetch(`${BACKEND_URL}/api/ipfs/access`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ certId, wallet, signature, message }),
+  });
+
+  if (!response.ok) {
+    let msg = `Backend request failed: ${response.status}`;
+    try {
+      const errPayload = await response.json();
+      msg = errPayload.detail || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('content-disposition') || '';
+const match = disposition.match(/filename\*=UTF-8''([^;]+)/);
+const filename = match ? decodeURIComponent(match[1]) : certId;
+
+  return { objectUrl: URL.createObjectURL(blob), filename };
+}

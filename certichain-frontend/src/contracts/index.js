@@ -209,7 +209,12 @@ export const CONTRACT_ABI = [
               "internalType": "string",
               "name": "revokedReason",
               "type": "string"
-            }
+            },
+            {
+              "internalType": "string",
+              "name": "ipfsCID",
+              "type": "string"
+      }
           ],
           "internalType": "struct CertificateRegistry.Certificate",
           "name": "",
@@ -381,6 +386,11 @@ export const CONTRACT_ABI = [
           "internalType": "uint256",
           "name": "expiresAt",
           "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "ipfsCID",
+          "type": "string"
         }
       ],
       "name": "issueCertificate",

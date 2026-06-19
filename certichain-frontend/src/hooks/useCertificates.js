@@ -35,7 +35,8 @@ export function useCertificates() {
         data.metadataHash,
         data.merkleRoot,
         data.recipient,
-        data.expiresAt
+        data.expiresAt,
+        data.ipfsCID || ''
       );
 
       updateTransaction(txRecord.id, {
@@ -62,6 +63,9 @@ export function useCertificates() {
         certId: data.certId,
       };
     } catch (error) {
+      console.error('Issue certificate error FULL:', error);
+      console.error('Error reason:', error?.reason);
+      console.error('Error data:', error?.data);
       console.error('Issue certificate error:', error);
       updateTransaction(txRecord.id, {
         status: 'failed',
@@ -159,6 +163,7 @@ export function useCertificates() {
         expiresAt: cert.expiresAt,
         status: Number(cert.status),
         revokedReason: cert.revokedReason,
+        ipfsCID: cert.ipfsCID || '',
       };
     } catch (error) {
       console.error('Get certificate error:', error);
@@ -188,6 +193,7 @@ export function useCertificates() {
             status:        Number(cert.status),
             statusLabel:   statusLabels[Number(cert.status)] || 'Unknown',
             revokedReason: cert.revokedReason,
+            ipfsCID:       cert.ipfsCID || '',
           };
         })
       );

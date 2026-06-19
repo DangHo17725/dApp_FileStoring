@@ -8,6 +8,7 @@ import { StatusBadge, TypeBadge } from '../components/common/Badges';
 import { AddressDisplay, HashDisplay, TimestampDisplay } from '../components/common/Displays';
 import { formatDate, formatAddress } from '../utils/format';
 import toast from 'react-hot-toast';
+import { getFileAccess } from '../utils/backendApi';
 import {
   Award,
   ArrowLeft,
@@ -31,12 +32,13 @@ import {
 export function CertificateDetailPage() {
   const { certId } = useParams();
   const navigate = useNavigate();
-  const { account, isAdmin, isIssuer, networkInfo } = useWeb3();
+  const { account, isAdmin, isIssuer, networkInfo, chainId } = useWeb3();
   const { getCertificate, revokeCertificate, isLoading } = useCertificates();
 
   const [certificate, setCertificate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [revoking, setRevoking] = useState(false);
+  const [loadingFile, setLoadingFile] = useState(false);
   const [revokeReason, setRevokeReason] = useState('');
   const [showRevokeModal, setShowRevokeModal] = useState(false);
 
@@ -83,6 +85,35 @@ export function CertificateDetailPage() {
       console.error('Revoke error:', error);
     } finally {
       setRevoking(false);
+    }
+  };
+
+  const handleViewFile = async () => {
+    if (chainId !== 11155111) {
+      toast.error('Vui lòng chuyển MetaMask sang mạng Sepolia Testnet để xác thực file!');
+      return;
+    }
+
+    if (!certificate?.ipfsCID) {
+      toast.error('Certificate này chưa có file đính kèm');
+      return;
+    }
+    setLoadingFile(true);
+    try {
+      const message = `View file for cert: ${certId} at ${Date.now()}`;
+      const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, account],
+      });
+
+      const { objectUrl } = await getFileAccess({ certId, wallet: account, signature, message });
+      window.open(objectUrl, '_blank');
+      // Giải phóng bộ nhớ sau khi tab mới đã kịp load file
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch (err) {
+      toast.error(err.message || 'Không có quyền truy cập file');
+    } finally {
+      setLoadingFile(false);
     }
   };
 
@@ -309,6 +340,19 @@ export function CertificateDetailPage() {
                 <Shield className="w-5 h-5" />
                 Verify Certificate
               </Link>
+              {certificate?.ipfsCID && (
+                <button
+                  onClick={handleViewFile}
+                  disabled={loadingFile}
+                  className="btn-secondary w-full justify-center"
+              >
+                  {loadingFile ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" />Đang xác thực...</>
+                  ) : (
+                    <><ExternalLink className="w-5 h-5" />View Original File</>
+                  )}
+              </button>
+              )}
               <button
                 onClick={() => copyToClipboard(window.location.href, 'Link')}
                 className="btn-ghost w-full justify-center"
