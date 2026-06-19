@@ -3,49 +3,69 @@ import { useWeb3 } from '../context/Web3Context';
 import { useNotary } from '../hooks/useNotary';
 import { Layout } from '../components/layout/Layout';
 import { PermissionDenied } from '../components/common/States';
-import {
-  ShieldCheck, FileText, CheckCircle, XCircle, Loader2, ExternalLink, FileStack,
-} from 'lucide-react';
+import { FileText, ShieldCheck, Download, Loader2, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getNotaryLogs, downloadJson } from '../utils/notaryStorage';
 
 export function NotarizePage() {
   const { account } = useWeb3();
-  const { notarizeBatch, verifyDocument, isLoading } = useNotary();
+  const { notarizeBatch, isLoading } = useNotary();
 
   const [files, setFiles] = useState([]);
   const [description, setDescription] = useState('');
   const [result, setResult] = useState(null);
-  const [verifyState, setVerifyState] = useState({}); // fileName -> 'loading' | {proofValid, batchOnChain}
+  const [logs, setLogs] = useState(() => getNotaryLogs());
 
   const handleFiles = (e) => {
     setFiles(Array.from(e.target.files || []));
     setResult(null);
-    setVerifyState({});
   };
 
   const handleNotarize = async () => {
     if (files.length === 0) {
-      toast.error('Please select at least one file');
+      toast.error('Chọn ít nhất một file');
       return;
     }
-    const res = await notarizeBatch(files, description);
-    if (res?.success) setResult(res);
+
+    try {
+      const res = await notarizeBatch(files, description);
+
+      if (res?.merkleRoot) {
+        setResult(res);
+        setLogs(getNotaryLogs());
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleVerifyFile = async (file) => {
-    setVerifyState((s) => ({ ...s, [file.fileName]: 'loading' }));
-    const res = await verifyDocument({
-      leafHash:   file.documentHash,
-      proof:      file.proof,
-      merkleRoot: result.merkleRoot,
-    });
-    setVerifyState((s) => ({ ...s, [file.fileName]: res || { proofValid: false, batchOnChain: false } }));
+  const handleDownloadProof = (batch) => {
+    if (!batch?.merkleRoot) return;
+
+    const proofFile = {
+      batchId: batch.batchId,
+      type: 'DOCUMENT_NOTARY_BATCH_PROOF',
+      merkleRoot: batch.merkleRoot,
+      txHash: batch.txHash || null,
+      blockNumber: batch.blockNumber || null,
+      fileCount: batch.fileCount,
+      description: batch.description || '',
+      status: batch.status,
+      submitter: batch.submitter || account,
+      createdAt: batch.createdAt || new Date().toISOString(),
+      files: batch.files || [],
+    };
+
+    downloadJson(
+      proofFile,
+      `batch-proof-${batch.merkleRoot.slice(2, 10)}.json`
+    );
   };
 
   if (!account) {
     return (
       <Layout>
-        <PermissionDenied message="Connect your wallet to notarize a document batch." />
+        <PermissionDenied message="Kết nối ví để công chứng một lô tài liệu." />
       </Layout>
     );
   }
@@ -53,135 +73,247 @@ export function NotarizePage() {
   return (
     <Layout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-dark-100">Batch Notarization</h1>
+        <h1 className="text-2xl font-bold text-dark-100">Document Notary</h1>
         <p className="text-dark-400">
-          Gộp nhiều file thành một Merkle root và công chứng root đó lên chain (DocumentNotary)
+          Công chứng một lô file mới: hệ thống hash từng file, tạo Merkle Tree,
+          ghi Merkle Root lên blockchain và xuất Batch Proof JSON để xác minh sau.
         </p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* ─── Notarize ─── */}
         <div className="glass-card p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <FileStack className="w-5 h-5 text-primary-400" />
-            <h2 className="font-semibold text-dark-100">1. Chọn file</h2>
+            <FileText className="w-5 h-5 text-primary-400" />
+            <h2 className="font-semibold text-dark-100">
+              1. Chọn file & công chứng
+            </h2>
           </div>
 
           <input
             type="file"
             multiple
             onChange={handleFiles}
-            className="block w-full text-sm text-dark-300
-                       file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
-                       file:bg-primary-500/20 file:text-primary-300 file:cursor-pointer"
+            className="block w-full text-sm text-dark-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-600 file:text-white file:cursor-pointer"
           />
+
           {files.length > 0 && (
-            <p className="text-sm text-dark-400">{files.length} file đã chọn</p>
+            <div className="space-y-1">
+              <p className="text-sm text-dark-400">
+                {files.length} file đã chọn
+              </p>
+
+              <div className="max-h-32 overflow-y-auto rounded-lg border border-dark-700 bg-dark-900/50 p-3">
+                {files.map((file, index) => (
+                  <p
+                    key={`${file.name}-${index}`}
+                    className="text-xs text-dark-400 truncate"
+                  >
+                    {index + 1}. {file.name}
+                  </p>
+                ))}
+              </div>
+            </div>
           )}
 
           <div>
-            <label className="label">Mô tả (tuỳ chọn)</label>
+            <label className="block text-sm text-dark-300 mb-1">
+              Mô tả batch
+            </label>
             <input
-              type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="VD: Lô tốt nghiệp 2026 - CNTT"
-              className="input-field"
+              placeholder="VD: Hồ sơ sinh viên Nguyễn Văn A"
+              className="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-700 text-dark-100 placeholder-dark-500"
             />
           </div>
 
           <button
             onClick={handleNotarize}
-            disabled={isLoading || files.length === 0}
-            className="btn-primary w-full justify-center"
+            disabled={isLoading}
+            className="w-full py-3 rounded-lg bg-primary-600 hover:bg-primary-500 text-white font-medium flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {isLoading ? (
-              <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <><ShieldCheck className="w-5 h-5" /> Notarize on Blockchain</>
+              <ShieldCheck className="w-4 h-4" />
             )}
+            Notarize on Blockchain
           </button>
         </div>
 
-        {/* ─── Result + verify ─── */}
-        <div className="glass-card p-6">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="glass-card p-6 space-y-4">
+          <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-primary-400" />
-            <h2 className="font-semibold text-dark-100">2. Kết quả & verify on-chain</h2>
+            <h2 className="font-semibold text-dark-100">
+              2. Kết quả & Batch Proof
+            </h2>
           </div>
 
           {!result ? (
-            <p className="text-dark-500 text-sm">
-              Công chứng một lô để thấy Merkle root và verify từng file ngay trên chain.
+            <p className="text-dark-400 text-sm">
+              Sau khi công chứng, hệ thống sẽ hiển thị Merkle Root, transaction
+              hash, block number và cho phép tải Batch Proof JSON.
             </p>
           ) : (
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs text-dark-500">Merkle Root</p>
-                <p className="font-mono text-xs text-primary-400 break-all">{result.merkleRoot}</p>
-              </div>
+            <div className="space-y-3">
+              <StatusBadge status={result.status} />
 
-              <div className="flex gap-6">
-                <div>
-                  <p className="text-xs text-dark-500">Số file</p>
-                  <p className="text-dark-200">{result.fileCount}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-dark-500">Block</p>
-                  <p className="text-dark-200">{result.blockNumber}</p>
-                </div>
-              </div>
+              <Field label="Merkle Root" value={result.merkleRoot} mono />
+              <Field label="Tx Hash" value={result.txHash || '-'} mono />
+              <Field
+                label="Block"
+                value={result.blockNumber ? String(result.blockNumber) : '-'}
+              />
+              <Field label="Số file" value={String(result.fileCount)} />
 
-              <div>
-                <p className="text-xs text-dark-500">Tx Hash</p>
+              {result.description && (
+                <Field label="Mô tả" value={result.description} />
+              )}
+
+              {result.txHash && (
                 <a
                   href={`https://sepolia.etherscan.io/tx/${result.txHash}`}
-                  target="_blank" rel="noreferrer"
-                  className="font-mono text-xs text-primary-400 break-all inline-flex items-center gap-1"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary-400 text-sm hover:underline flex items-center gap-1"
                 >
-                  {result.txHash} <ExternalLink className="w-3 h-3 shrink-0" />
+                  Xem transaction trên Sepolia Etherscan
+                  <ExternalLink className="w-3 h-3" />
                 </a>
-              </div>
+              )}
 
-              <div className="border-t border-dark-700 pt-3 space-y-2">
-                <p className="text-xs text-dark-500">Proof từng file — bấm để verify trên chain</p>
-                {result.files.map((f) => {
-                  const v = verifyState[f.fileName];
-                  return (
-                    <div key={f.fileName} className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-2 text-sm text-dark-200 truncate">
-                        <FileText className="w-4 h-4 text-dark-500 shrink-0" />
-                        <span className="truncate">{f.fileName}</span>
-                      </span>
+              <button
+                onClick={() => handleDownloadProof(result)}
+                className="w-full py-2 rounded-lg border border-primary-500 text-primary-400 hover:bg-primary-600/10 flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Tải Batch Proof JSON
+              </button>
 
-                      {v === 'loading' ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-primary-400 shrink-0" />
-                      ) : v ? (
-                        v.proofValid && v.batchOnChain ? (
-                          <span className="flex items-center gap-1 text-emerald-400 text-sm shrink-0">
-                            <CheckCircle className="w-4 h-4" /> Valid
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-red-400 text-sm shrink-0">
-                            <XCircle className="w-4 h-4" /> Invalid
-                          </span>
-                        )
-                      ) : (
-                        <button
-                          onClick={() => handleVerifyFile(f)}
-                          className="btn-secondary px-3 py-1 text-xs shrink-0"
-                        >
-                          Verify
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <p className="text-xs text-dark-500">
+                Giữ file JSON này cùng các file gốc. File JSON chứa Merkle Proof
+                để verify từng file riêng lẻ ở trang Verify Batch.
+              </p>
             </div>
           )}
         </div>
       </div>
+
+      <div className="glass-card p-6 mt-8">
+        <div className="flex items-center gap-2 mb-4">
+          <FileText className="w-5 h-5 text-primary-400" />
+          <h2 className="font-semibold text-dark-100">
+            3. Notary Logs
+          </h2>
+        </div>
+
+        {logs.length === 0 ? (
+          <p className="text-dark-400 text-sm">
+            Chưa có batch nào được lưu log trên trình duyệt này.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {logs.map((log) => (
+              <div
+                key={log.merkleRoot}
+                className="p-4 rounded-xl bg-dark-900/60 border border-dark-700"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                  <div className="space-y-2 flex-1">
+                    <StatusBadge status={log.status} />
+
+                    <Field label="Merkle Root" value={log.merkleRoot} mono />
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <Field label="Số file" value={String(log.fileCount)} />
+                      <Field
+                        label="Block"
+                        value={log.blockNumber ? String(log.blockNumber) : '-'}
+                      />
+                      <Field
+                        label="Ngày tạo"
+                        value={
+                          log.createdAt
+                            ? new Date(log.createdAt).toLocaleString()
+                            : '-'
+                        }
+                      />
+                      <Field label="Trạng thái" value={log.status || '-'} />
+                    </div>
+
+                    {log.description && (
+                      <Field label="Mô tả" value={log.description} />
+                    )}
+
+                    {log.txHash && (
+                      <a
+                        href={`https://sepolia.etherscan.io/tx/${log.txHash}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary-400 text-sm hover:underline flex items-center gap-1"
+                      >
+                        Xem transaction
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => handleDownloadProof(log)}
+                    className="px-4 py-2 rounded-lg border border-primary-500 text-primary-400 hover:bg-primary-600/10 flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download Proof
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </Layout>
+  );
+}
+
+function Field({ label, value, mono }) {
+  return (
+    <div>
+      <p className="text-dark-500 text-xs mb-0.5">{label}</p>
+      <p
+        className={`text-dark-200 text-sm break-all ${
+          mono ? 'font-mono' : ''
+        }`}
+      >
+        {value || '-'}
+      </p>
+    </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const normalized = status || 'unknown';
+
+  const className =
+    normalized === 'success' || normalized === 'notarized'
+      ? 'bg-green-500/10 text-green-400'
+      : normalized === 'already_exists'
+      ? 'bg-yellow-500/10 text-yellow-400'
+      : normalized === 'failed'
+      ? 'bg-red-500/10 text-red-400'
+      : 'bg-blue-500/10 text-blue-400';
+
+  const label =
+    normalized === 'already_exists'
+      ? 'Already Notarized'
+      : normalized === 'notarized'
+      ? 'Notarized'
+      : normalized;
+
+  return (
+    <span
+      className={`inline-flex w-fit px-2 py-1 rounded-lg text-xs font-medium ${className}`}
+    >
+      {label}
+    </span>
   );
 }

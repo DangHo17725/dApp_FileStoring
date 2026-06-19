@@ -38,6 +38,7 @@ import {
 const TABS = [
   { id: 'id', label: 'Verify by ID', icon: Search },
   { id: 'file', label: 'Verify by File', icon: Upload },
+  { id: 'hash', label: 'Verify by Hash', icon: Hash },
   { id: 'qr', label: 'QR Code', icon: QrCode },
 ];
 
@@ -53,6 +54,7 @@ export function VerifyCertificatePage() {
   const [certId, setCertId] = useState(searchParams.get('id') || '');
   const [file, setFile] = useState(null);
   const [documentHash, setDocumentHash] = useState('');
+  const [hashInput, setHashInput] = useState('');
   const [isHashing, setIsHashing] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
@@ -172,6 +174,41 @@ export function VerifyCertificatePage() {
     }
   }, [documentHash, certificates, verifyCertificate, markStepComplete]);
 
+  const handleVerifyByHash = useCallback(async () => {
+    const h = hashInput.trim().toLowerCase();
+    if (!/^0x[0-9a-f]{64}$/.test(h)) {
+      toast.error('Hash must be 0x followed by 64 hex characters');
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationResult(null);
+
+    try {
+      const matchingCert = certificates.find(
+        c => c.documentHash?.toLowerCase() === h
+      );
+
+      if (matchingCert) {
+        const verification = await verifyCertificate(matchingCert.certId);
+        setVerificationResult({
+          found: true,
+          certificate: matchingCert,
+          verification,
+          matchedByHash: true,
+        });
+        markStepComplete(4);
+      } else {
+        setVerificationResult({ found: false, matchedByHash: true });
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      setVerificationResult({ found: false, error: error.message });
+    } finally {
+      setIsVerifying(false);
+    }
+  }, [hashInput, certificates, verifyCertificate, markStepComplete]);
+
   const generateQRValue = (id) => {
     const baseUrl = window.location.origin;
     return `${baseUrl}/verify?id=${id}`;
@@ -215,7 +252,7 @@ export function VerifyCertificatePage() {
             <div>
               <h3 className="font-semibold text-dark-100">Certificate Not Found</h3>
               <p className="text-dark-400">
-                {verificationResult.matchedByFile
+                {(verificationResult.matchedByFile || verificationResult.matchedByHash)
                   ? 'No certificate matches this document hash on the blockchain'
                   : 'No certificate found with this ID on the blockchain'
                 }
@@ -326,11 +363,15 @@ export function VerifyCertificatePage() {
               <p className="text-xs text-dark-500">Metadata Hash</p>
               <HashDisplay hash={certificate.metadataHash} />
             </div>
-            {verificationResult.matchedByFile && (
+            {(verificationResult.matchedByFile || verificationResult.matchedByHash) && (
               <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
                 <div className="flex items-center gap-2 text-emerald-400">
                   <CheckCircle className="w-5 h-5" />
-                  <span>Document hash matches the uploaded file</span>
+                  <span>
+                    {verificationResult.matchedByFile
+                      ? 'Document hash matches the uploaded file'
+                      : 'Document hash matches the hash you entered'}
+                  </span>
                 </div>
               </div>
             )}
@@ -470,6 +511,43 @@ export function VerifyCertificatePage() {
               )}
             </button>
           )}
+          {renderVerificationResult()}
+        </div>
+      )}
+
+      {activeTab === 'hash' && (
+        <div className="glass-card p-6">
+          <h2 className="font-semibold text-dark-100 mb-4">Enter Document Hash</h2>
+          <p className="text-dark-400 mb-4">
+            Paste the SHA-256 document hash (0x…) to find the matching certificate — for example a hash from a Batch Proof JSON or computed elsewhere.
+          </p>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={hashInput}
+              onChange={(e) => setHashInput(e.target.value)}
+              placeholder="0x…"
+              className="input-field flex-1 font-mono"
+              onKeyDown={(e) => e.key === 'Enter' && handleVerifyByHash()}
+            />
+            <button
+              onClick={handleVerifyByHash}
+              disabled={isVerifying}
+              className="btn-primary"
+            >
+              {isVerifying ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <Shield className="w-5 h-5" />
+                  Find Certificate
+                </>
+              )}
+            </button>
+          </div>
           {renderVerificationResult()}
         </div>
       )}
