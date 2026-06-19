@@ -314,7 +314,7 @@ export function useNotary() {
           : null;
       } catch (error) {
         console.error('Check batch error:', error);
-        toast.error(error.message || 'Kiểm tra batch thất bại');
+        toast.error(error.message || 'Batch verification failed');
         return null;
       }
     },

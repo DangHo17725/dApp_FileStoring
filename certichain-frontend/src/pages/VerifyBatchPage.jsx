@@ -9,9 +9,9 @@ import {
 import toast from 'react-hot-toast';
 
 const MODES = [
-  { id: 'files', label: 'Nguyên batch',   icon: FileStack },
-  { id: 'root',  label: 'Bằng Root',      icon: Hash },
-  { id: 'file',  label: '1 file + proof', icon: FileCheck },
+  { id: 'files', label: 'Entire batch',   icon: FileStack },
+  { id: 'root',  label: 'Root verification',      icon: Hash },
+  { id: 'file',  label: 'single file + proof', icon: FileCheck },
 ];
 
 export function VerifyBatchPage() {
@@ -38,7 +38,7 @@ export function VerifyBatchPage() {
   const switchMode = (id) => { setMode(id); reset(); };
 
   const handleVerifyFiles = async () => {
-    if (files.length === 0) { toast.error('Chọn lại đúng bộ file của batch'); return; }
+    if (files.length === 0) { toast.error('Please select the exact batch files.'); return; }
     setBusy(true); reset();
     setBatchResult((await checkBatchByFiles(files)) || { notarized: false });
     setBusy(false);
@@ -47,7 +47,7 @@ export function VerifyBatchPage() {
   const handleVerifyRoot = async () => {
     const root = rootInput.trim();
     if (!/^0x[0-9a-fA-F]{64}$/.test(root)) {
-      toast.error('Root phải là chuỗi 0x + 64 ký tự hex');
+      toast.error('Merkle Root must be a 0x prefix followed by 64 hex characters.');
       return;
     }
     setBusy(true); reset();
@@ -66,15 +66,15 @@ export function VerifyBatchPage() {
       setProofJson(json);
       setProofName(f.name);
     } catch {
-      toast.error('File JSON không đúng định dạng Batch Proof');
+      toast.error('Invalid JSON format for Batch Proof.');
       setProofJson(null);
       setProofName('');
     }
   };
 
   const handleVerifyFile = async () => {
-    if (!singleFile) { toast.error('Chọn file cần kiểm tra'); return; }
-    if (!proofJson)  { toast.error('Nạp Batch Proof JSON'); return; }
+    if (!singleFile) { toast.error('Please select a file to verify.'); return; }
+    if (!proofJson)  { toast.error('Please upload the Batch Proof JSON file.'); return; }
     setBusy(true); reset();
     try {
       const leafHash = await hashFile(singleFile); // băm file qua backend
@@ -93,7 +93,7 @@ export function VerifyBatchPage() {
       });
       setFileResult(res || { proofValid: false, batchOnChain: false });
     } catch (err) {
-      toast.error(err.message || 'Verify thất bại');
+      toast.error(err.message || 'Verification failed');
     } finally {
       setBusy(false);
     }
@@ -102,7 +102,7 @@ export function VerifyBatchPage() {
   if (!account) {
     return (
       <Layout>
-        <PermissionDenied message="Kết nối ví để xác minh một lô đã công chứng." />
+        <PermissionDenied message="Connect wallet to verify a notarized batch." />
       </Layout>
     );
   }
@@ -112,7 +112,7 @@ export function VerifyBatchPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-dark-100">Verify Batch</h1>
         <p className="text-dark-400">
-          Xác minh một lô đã công chứng — bằng cả batch, bằng Merkle root, hoặc từng file bằng Batch Proof JSON.
+          Verify a notarized batch — using the entire batch, a Merkle root, or a single file with a Batch Proof JSON.
         </p>
       </div>
 
@@ -150,7 +150,7 @@ export function VerifyBatchPage() {
               className="block w-full text-sm text-dark-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-600 file:text-white file:cursor-pointer"
             />
             {files.length > 0 && <p className="text-sm text-dark-400">{files.length} file đã chọn</p>}
-            <VerifyButton onClick={handleVerifyFiles} busy={busy} label="Verify nguyên batch" />
+            <VerifyButton onClick={handleVerifyFiles} busy={busy} label="Verify entire batch" />
           </>
         )}
 
@@ -221,20 +221,20 @@ export function VerifyBatchPage() {
         {/* ── Kết quả 1 file ── */}
         {fileResult && (
           fileResult.notInBatch ? (
-            <Result title="File không nằm trong batch">
+            <Result title="File Not Found in Batch">
               <p className="text-dark-400 text-sm">
-                Hash của file không khớp file nào trong Batch Proof JSON — file đã bị sửa, hoặc không thuộc lô này.
+                The file hash does not match any entry in the Batch Proof JSON. The file may have been modified or belongs to a different batch.
               </p>
             </Result>
           ) : (
             <Result
               ok={fileResult.proofValid && fileResult.batchOnChain}
               title={fileResult.proofValid && fileResult.batchOnChain
-                ? 'File hợp lệ & thuộc batch trên chain'
-                : 'File không hợp lệ'}
+                ? 'File Valid & Belongs to On-Chain Batch'
+                : 'Invalid File'}
             >
-              <Line label="Proof hợp lệ (file nguyên vẹn)" value={fileResult.proofValid ? 'Có' : 'Không'} />
-              <Line label="Batch có trên chain" value={fileResult.batchOnChain ? 'Có' : 'Không'} />
+              <Line label="Valid proof (File integrity verified)" value={fileResult.proofValid ? 'Yes' : 'No'} />
+              <Line label="Batch On-Chain" value={fileResult.batchOnChain ? 'YES' : 'NO'} />
             </Result>
           )
         )}
