@@ -16,7 +16,8 @@ import { MyCertificatesPage } from './pages/MyCertificatesPage';
 import { TransactionLogPage } from './pages/TransactionLogPage';
 import { IssuerManagementPage } from './pages/IssuerManagementPage';
 import { DemoFlowPage } from './pages/DemoFlowPage';
-import { BackendLabPage } from './pages/BackendLabPage';
+import { VerifyBatchPage } from './pages/VerifyBatchPage';
+import { NotarizePage } from './pages/NotarizePage';
 
 export default function App() {
   return (
@@ -36,7 +37,8 @@ export default function App() {
               <Route path="/transactions" element={<TransactionLogPage />} />
               <Route path="/issuers" element={<IssuerManagementPage />} />
               <Route path="/demo" element={<DemoFlowPage />} />
-              <Route path="/backend-lab" element={<BackendLabPage />} />
+              <Route path="/verify-batch" element={<VerifyBatchPage />} />
+              <Route path="/notarize" element={<NotarizePage />} />
             </Routes>
             <Toaster
               position="bottom-right"

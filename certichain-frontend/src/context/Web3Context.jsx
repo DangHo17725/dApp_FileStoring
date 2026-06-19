@@ -1,7 +1,14 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
-import { CONTRACT_ABI, CONTRACT_ADDRESS, NETWORKS, CERTIFICATE_STATUS } from '../contracts';
+import {
+  CONTRACT_ABI,
+  CONTRACT_ADDRESS,
+  NOTARY_ABI,
+  NOTARY_ADDRESS,
+  NETWORKS,
+  CERTIFICATE_STATUS,
+} from '../contracts';
 
 const Web3Context = createContext(null);
 
@@ -9,6 +16,7 @@ export function Web3Provider({ children }) {
   const [provider, setProvider] = useState(null);
   const [signer, setSigner] = useState(null);
   const [contract, setContract] = useState(null);
+  const [notaryContract, setNotaryContract] = useState(null);
   const [account, setAccount] = useState(null);
   const [chainId, setChainId] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -64,6 +72,9 @@ export function Web3Provider({ children }) {
 
         const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, userSigner);
         setContract(contractInstance);
+        if (NOTARY_ADDRESS) {
+          setNotaryContract(new ethers.Contract(NOTARY_ADDRESS, NOTARY_ABI, userSigner));
+        }
 
         await checkRoles(contractInstance, accounts[0]);
       }
@@ -95,6 +106,9 @@ export function Web3Provider({ children }) {
 
       const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, userSigner);
       setContract(contractInstance);
+      if (NOTARY_ADDRESS) {
+        setNotaryContract(new ethers.Contract(NOTARY_ADDRESS, NOTARY_ABI, userSigner));
+      }
 
       await checkRoles(contractInstance, accounts[0]);
 
@@ -116,6 +130,7 @@ export function Web3Provider({ children }) {
     setAccount(null);
     setSigner(null);
     setContract(null);
+    setNotaryContract(null);
     setIsAdmin(false);
     setIsIssuer(false);
     toast.success('Wallet disconnected');
@@ -183,6 +198,9 @@ export function Web3Provider({ children }) {
           setSigner(newSigner);
           const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, newSigner);
           setContract(contractInstance);
+          if (NOTARY_ADDRESS) {
+            setNotaryContract(new ethers.Contract(NOTARY_ADDRESS, NOTARY_ABI, newSigner));
+          }
           await checkRoles(contractInstance, accounts[0]);
         }
       }
@@ -211,6 +229,7 @@ export function Web3Provider({ children }) {
     provider,
     signer,
     contract,
+    notaryContract,
     account,
     chainId,
     networkInfo,

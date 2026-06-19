@@ -180,7 +180,6 @@ export function IssuerManagementPage() {
 
             {/* Search */}
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-500" />
               <input
                 type="text"
                 placeholder="Search by address..."

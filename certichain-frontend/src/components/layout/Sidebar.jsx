@@ -13,6 +13,7 @@ import {
   ServerCog,
   Menu,
   X,
+  FileCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -22,8 +23,9 @@ const navItems = [
   { path: '/certificates', label: 'Certificates', icon: FileText },
   { path: '/my-certificates', label: 'My Certificates', icon: FolderOpen },
   { path: '/verify', label: 'Verify Certificate', icon: ShieldCheck },
+  { path: '/notarize', label: 'Document Notary', icon: FileCheck },
   { path: '/transactions', label: 'Transaction Log', icon: History },
-  { path: '/backend-lab', label: 'Backend Lab', icon: ServerCog },
+  { path: '/verify-batch', label: 'Verify Batch', icon: ShieldCheck },
   { path: '/issuers', label: 'Issuer Management', icon: Users },
   { path: '/demo', label: 'Demo Flow', icon: PlayCircle },
 ];
