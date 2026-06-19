@@ -59,45 +59,31 @@ export function IssueCertificatePage() {
     setForm(prev => ({ ...prev, [field]: value }));
   }, [backendStatus.online]);
 
-  const handleFileSelect = useCallback(async (selectedFile) => {
+  const handleFileSelect = useCallback(async(selectedFile) => {
     if (!isValidFileType(selectedFile)) {
       toast.error('Invalid file type. Please upload PDF, PNG, or JPG');
       return;
     }
 
+    // Chỉ lưu file vào state để chờ, KHÔNG gọi API upload ở đây
     setFile(selectedFile);
     setIsHashing(true);
 
     try {
       let hash;
       if (backendStatus.online) {
-        // 1. Lấy mã băm hash file bằng backend
+        // CHỈ LẤY HASH TỪ BACKEND - ĐÃ XOÁ ĐOẠN UPLOAD IPFS Ở ĐÂY
         const result = await hashFileWithBackend(selectedFile);
         hash = result.documentHash;
-
-        // 2. Đồng thời upload file lên IPFS qua API mới tạo
-      toast.loading('Uploading file to IPFS...', { id: 'ipfs-status' });
-      const ipfsResult = await uploadFileToIPFS(selectedFile);
-      
-      setIpfsData(ipfsResult); // Lưu object trả về từ FastAPI (gồm cid và ipfsURL)
-      toast.success('File hashed & uploaded to IPFS!', { id: 'ipfs-status' });
-    } else {
-      // Fallback cục bộ tại trình duyệt nếu backend offline
-      hash = await hashFile(selectedFile);
-      toast.success('File hash generated in browser fallback');
-    }
-      setDocumentHash(hash);
-    } catch (error) {
-      toast.error('Backend process failed. Using browser fallback', { id: 'ipfs-status' });
-      console.error(error);
-      try {
-        const fallbackHash = await hashFile(selectedFile);
-        setDocumentHash(fallbackHash);
-        toast.success('Backend unavailable. Browser hash fallback used');
-      } catch (fallbackError) {
-        toast.error('Failed to hash file');
-        console.error(error, fallbackError);
+        toast.success('File hashed successfully!');
+      } else {
+        hash = await hashFile(selectedFile);
+        toast.success('File hash generated in browser fallback');
       }
+      setDocumentHash(hash); // State này sẽ giúp hiển thị lên Preview Card lập tức!
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to hash file');
     } finally {
       setIsHashing(false);
     }
@@ -117,14 +103,9 @@ export function IssueCertificatePage() {
 const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.certId || !form.certName || !form.recipientAddress || !documentHash) {
+    // Lúc này documentHash đã có từ bước chọn file nên sẽ PASS qua đoạn check này mượt mà
+    if (!form.certId || !form.certName || !form.recipientAddress || !documentHash || !file) {
       toast.error('Please fill in all required fields and upload a file');
-      return;
-    }
-
-    //  Kiểm tra documentHash gốc xem có đúng chuẩn bytes32 không
-    if (!documentHash.startsWith('0x') || documentHash.length !== 66) {
-      toast.error('Invalid document hash format. Please re-upload the file.');
       return;
     }
 
@@ -134,9 +115,19 @@ const handleSubmit = async (e) => {
     }
 
     setTxStep('preparing');
+    let currentIpfsCid = 'N/A';
 
     try {
-      // Generate metadata hash
+      // CHÍNH THỨC UPLOAD LÊN PINATA KHI BẤM NÚT
+      if (backendStatus.online) {
+        toast.loading('Uploading encrypted file to IPFS...', { id: 'ipfs-upload' });
+        const ipfsResult = await uploadFileToIPFS(file);
+        currentIpfsCid = ipfsResult.cid;
+        setIpfsData(ipfsResult);
+        toast.success('File uploaded to IPFS!', { id: 'ipfs-upload' });
+      }
+
+      // Tạo Metadata Hash
       const metadata = {
         certId: form.certId,
         certName: form.certName,
@@ -147,31 +138,23 @@ const handleSubmit = async (e) => {
       };
       const metadataHash = await generateMetadataHash(metadata);
 
-      // Kiểm tra metadataHash vừa sinh ra xem có hợp lệ không
-      if (!metadataHash || !metadataHash.startsWith('0x') || metadataHash.length !== 66) {
-        toast.error('Failed to generate a valid metadata hash. Please try again.');
-        setTxStep(null);
-        return; // Dừng lại ngay lập tức nếu hash lỗi, không để lọt hash giả/hash rỗng xuống dưới
-      }
-
       setTxStep('signing');
 
-      // Calculate expiry timestamp
       const expiresAt = form.expiryDate
         ? Math.floor(new Date(form.expiryDate).getTime() / 1000)
         : 0;
 
-      // [GIỮ NGUYÊN THAM SỐ GỐC] Truyền trực tiếp dữ liệu thật của bạn vào
+      // Kích hoạt MetaMask gửi transaction
       const result = await issueCertificate({
         certId: form.certId,
         certName: form.certName,
         certType: form.certType,
-        documentHash,
+        documentHash: documentHash, // Lấy từ state đã có sẵn
         metadataHash,
         merkleRoot: documentHash,
         recipient: form.recipientAddress,
         expiresAt,
-        ipfsCID: ipfsData?.cid || 'N/A', // Đổi chuỗi rỗng thành 'N/A' nếu chưa có IPFS để tránh lỗi String rỗng tùy thuộc vào Smart Contract
+        ipfsCID: currentIpfsCid,     // CID vừa up lên Pinata xong
       });
 
       if (result?.success) {
@@ -184,7 +167,7 @@ const handleSubmit = async (e) => {
       }
     } catch (error) {
       console.error('Issue error:', error);
-      toast.error(error.message || 'Transaction failed'); // Hiện thêm thông báo lỗi ra màn hình cho dễ nhìn
+      toast.error(error.message || 'Transaction failed');
       setTxStep(null);
     }
   };
