@@ -37,6 +37,7 @@ export declare namespace CertificateRegistry {
     expiresAt: BigNumberish;
     status: BigNumberish;
     revokedReason: string;
+    ipfsCID: string;
   };
 
   export type CertificateStructOutput = [
@@ -51,7 +52,8 @@ export declare namespace CertificateRegistry {
     issuedAt: bigint,
     expiresAt: bigint,
     status: bigint,
-    revokedReason: string
+    revokedReason: string,
+    ipfsCID: string
   ] & {
     merkleRoot: string;
     certId: string;
@@ -65,6 +67,7 @@ export declare namespace CertificateRegistry {
     expiresAt: bigint;
     status: bigint;
     revokedReason: string;
+    ipfsCID: string;
   };
 }
 
@@ -75,6 +78,7 @@ export interface CertificateRegistryInterface extends Interface {
       | "certificateExists"
       | "getAllCertificateIds"
       | "getCertificate"
+      | "getCertificateIPFS"
       | "getCertificatesByIssuer"
       | "getCertificatesByRecipient"
       | "getTotalCertificates"
@@ -108,6 +112,10 @@ export interface CertificateRegistryInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getCertificate",
+    values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getCertificateIPFS",
     values: [string]
   ): string;
   encodeFunctionData(
@@ -148,7 +156,8 @@ export interface CertificateRegistryInterface extends Interface {
       BytesLike,
       BytesLike,
       AddressLike,
-      BigNumberish
+      BigNumberish,
+      string
     ]
   ): string;
   encodeFunctionData(
@@ -179,6 +188,10 @@ export interface CertificateRegistryInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getCertificate",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getCertificateIPFS",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -347,6 +360,8 @@ export interface CertificateRegistry extends BaseContract {
     "view"
   >;
 
+  getCertificateIPFS: TypedContractMethod<[certId: string], [string], "view">;
+
   getCertificatesByIssuer: TypedContractMethod<
     [issuer: AddressLike],
     [string[]],
@@ -378,7 +393,8 @@ export interface CertificateRegistry extends BaseContract {
       metadataHash: BytesLike,
       merkleRoot: BytesLike,
       recipient: AddressLike,
-      expiresAt: BigNumberish
+      expiresAt: BigNumberish,
+      ipfsCID: string
     ],
     [void],
     "nonpayable"
@@ -436,6 +452,9 @@ export interface CertificateRegistry extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "getCertificateIPFS"
+  ): TypedContractMethod<[certId: string], [string], "view">;
+  getFunction(
     nameOrSignature: "getCertificatesByIssuer"
   ): TypedContractMethod<[issuer: AddressLike], [string[]], "view">;
   getFunction(
@@ -467,7 +486,8 @@ export interface CertificateRegistry extends BaseContract {
       metadataHash: BytesLike,
       merkleRoot: BytesLike,
       recipient: AddressLike,
-      expiresAt: BigNumberish
+      expiresAt: BigNumberish,
+      ipfsCID: string
     ],
     [void],
     "nonpayable"
