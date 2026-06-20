@@ -11,3 +11,5 @@ artifacts/
 dist/
 build/
 .DS_Store
+
+merkle_tree/benchmark/
