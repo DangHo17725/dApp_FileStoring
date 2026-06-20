@@ -18,6 +18,7 @@ import { IssuerManagementPage } from './pages/IssuerManagementPage';
 import { DemoFlowPage } from './pages/DemoFlowPage';
 import { VerifyBatchPage } from './pages/VerifyBatchPage';
 import { NotarizePage } from './pages/NotarizePage';
+import { ReissuePage } from './pages/ReissuePage';
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/my-certificates" element={<MyCertificatesPage />} />
               <Route path="/transactions" element={<TransactionLogPage />} />
               <Route path="/issuers" element={<IssuerManagementPage />} />
+              <Route path="/reissue" element={<ReissuePage />} />
               <Route path="/demo" element={<DemoFlowPage />} />
               <Route path="/verify-batch" element={<VerifyBatchPage />} />
               <Route path="/notarize" element={<NotarizePage />} />

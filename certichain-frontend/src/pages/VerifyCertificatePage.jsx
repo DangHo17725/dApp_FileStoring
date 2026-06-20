@@ -152,7 +152,11 @@ export function VerifyCertificatePage() {
 
     try {
       // Search for certificate with matching document hash
-      const matchingCert = certificates.find(c => c.documentHash === documentHash);
+      const nowSec = Math.floor(Date.now() / 1000);
+      const matches = certificates.filter(c => c.documentHash === documentHash);
+      const matchingCert =
+        matches.find(c => c.status === 0 && (c.expiresAt === 0 || c.expiresAt > nowSec)) ||
+        [...matches].sort((a, b) => b.issuedAt - a.issuedAt)[0] || null;
       
       if (matchingCert) {
         const verification = await verifyCertificate(matchingCert.certId);
@@ -185,9 +189,11 @@ export function VerifyCertificatePage() {
     setVerificationResult(null);
 
     try {
-      const matchingCert = certificates.find(
-        c => c.documentHash?.toLowerCase() === h
-      );
+      const nowSec = Math.floor(Date.now() / 1000);
+      const matches = certificates.filter(c => c.documentHash?.toLowerCase() === h);
+      const matchingCert =
+        matches.find(c => c.status === 0 && (c.expiresAt === 0 || c.expiresAt > nowSec)) ||
+        [...matches].sort((a, b) => b.issuedAt - a.issuedAt)[0] || null;
 
       if (matchingCert) {
         const verification = await verifyCertificate(matchingCert.certId);
